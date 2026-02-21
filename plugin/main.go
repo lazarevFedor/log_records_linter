@@ -1,1 +1,1 @@
-package plugin
+package main
