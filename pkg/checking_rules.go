@@ -9,6 +9,7 @@ import (
 	"golang.org/x/tools/go/analysis"
 )
 
+// secretPatterns contains regex patterns for common secrets that should not be included in log messages.
 var secretPatterns = []struct {
 	pattern *regexp.Regexp
 	name    string
@@ -31,54 +32,55 @@ var secretPatterns = []struct {
 	{regexp.MustCompile(`(?i)(bearer|token)['"]?\s*[:=]\s*['"]?[0-9a-zA-Z\-_.]{20,}`), "Bearer/Auth Token"},
 }
 
-func checkLowercaseStart(pass *analysis.Pass, pos token.Pos, msg string) {
+// isLowercaseStartValid checks if the log message starts with a lowercase letter.
+func isLowercaseStartValid(msg string) bool {
 	msg = strings.TrimSpace(msg)
 	if msg == "" {
-		return
+		return false
 	}
 
-	for _, r := range msg {
-		if unicode.IsLetter(r) {
-			if unicode.IsUpper(r) {
-				pass.Reportf(pos, "log message should start with lowercase letter")
-			}
-			return
-		}
+	if unicode.IsLetter(rune(msg[0])) {
+		return unicode.IsUpper(rune(msg[0]))
 	}
+	return false
 }
 
-func checkEnglishOnly(pass *analysis.Pass, pos token.Pos, msg string) {
+// isEnglishOnlyValid checks if the log message contains only English letters, digits, spaces, and allowed punctuation.
+func isEnglishOnlyValid(msg string) bool {
 	for _, r := range msg {
-		if !unicode.IsLetter(r) {
+		if unicode.IsDigit(r) || unicode.IsSpace(r) {
 			continue
 		}
-
-		if !((r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z')) {
-			pass.Reportf(pos, "log message should be in English only (Latin alphabet)")
-			return
-		}
-	}
-}
-
-// checkNoSpecialChars проверяет, что сообщение не содержит недопустимые спецсимволы и эмодзи.
-func checkNoSpecialChars(pass *analysis.Pass, pos token.Pos, msg string) {
-	for _, r := range msg {
-		if unicode.IsLetter(r) || unicode.IsDigit(r) || unicode.IsSpace(r) {
-			continue
-		}
-
 		if r == '.' || r == ',' || r == ':' || r == ';' || r == '-' || r == '_' || r == '\'' || r == '"' {
 			continue
 		}
-
-		if r == '!' || r == '?' || r == '…' || r > 127 {
-			pass.Reportf(pos, "log message should not contain special characters or emoji")
-			return
+		if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') {
+			continue
 		}
+		return true
 	}
+	return false
 }
 
-func checkNoSensitiveData(pass *analysis.Pass, pos token.Pos, msg string) {
+// isNoSpecialCharsValid checks if the log message contains any special characters or emoji that are not allowed.
+func isNoSpecialCharsValid(msg string) bool {
+	for _, r := range msg {
+		if unicode.IsDigit(r) || unicode.IsSpace(r) {
+			continue
+		}
+		if r == '.' || r == ',' || r == ':' || r == ';' || r == '-' || r == '_' || r == '\'' || r == '"' {
+			continue
+		}
+		if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') {
+			continue
+		}
+		return true
+	}
+	return false
+}
+
+// isNoSensitiveDataValid checks if the log message contains any sensitive data based on keywords and regex patterns.
+func isNoSensitiveDataValid(msg string) bool {
 	lowerMsg := strings.ToLower(msg)
 	sensitiveKeywords := []string{
 		"password", "passwd", "pwd",
@@ -91,15 +93,45 @@ func checkNoSensitiveData(pass *analysis.Pass, pos token.Pos, msg string) {
 
 	for _, keyword := range sensitiveKeywords {
 		if strings.Contains(lowerMsg, keyword) {
-			pass.Reportf(pos, "log message should not contain sensitive data keywords like %q", keyword)
-			return
+			return true
 		}
 	}
-
 	for _, sp := range secretPatterns {
 		if sp.pattern.MatchString(msg) {
-			pass.Reportf(pos, "log message appears to contain secret data (%s)", sp.name)
-			return
+			return true
 		}
+	}
+	return false
+}
+
+// checkLowercaseStart checks if the log message starts with a lowercase letter
+// and reports an issue if it does not.
+func checkLowercaseStart(pass *analysis.Pass, pos token.Pos, msg string) {
+	if isLowercaseStartValid(msg) {
+		pass.Reportf(pos, "log message should start with lowercase letter")
+	}
+}
+
+// checkEnglishOnly checks if the log message contains only English letters, digits,
+// spaces, and allowed punctuation, and reports an issue if it does not.
+func checkEnglishOnly(pass *analysis.Pass, pos token.Pos, msg string) {
+	if isEnglishOnlyValid(msg) {
+		pass.Reportf(pos, "log message should be in English only (Latin alphabet)")
+	}
+}
+
+// checkNoSpecialChars checks if the log message contains any special characters
+// or emoji that are not allowed, and reports an issue if it does.
+func checkNoSpecialChars(pass *analysis.Pass, pos token.Pos, msg string) {
+	if isNoSpecialCharsValid(msg) {
+		pass.Reportf(pos, "log message should not contain special characters or emoji")
+	}
+}
+
+// checkNoSensitiveData checks if the log message contains any sensitive data based on keywords
+// and regex patterns, and reports an issue if it does.
+func checkNoSensitiveData(pass *analysis.Pass, pos token.Pos, msg string) {
+	if isNoSensitiveDataValid(msg) {
+		pass.Reportf(pos, "log message should not contain sensitive data")
 	}
 }
