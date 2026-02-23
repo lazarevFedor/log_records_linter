@@ -1,43 +1,47 @@
-.PHONY: help build build-plugin test lint clean
+.PHONY: help build-cli build-plugin test lint
 
 PLUGIN_NAME := logs
-PLUGIN_OUT := bin/$(PLUGIN_NAME).so
 GO := go
+CUSTOM_BIN := custom-gcl
 
 help:
 	@echo "Available targets:"
 	@echo "  make build-cli       - Build the CLI tool"
-	@echo "  make build-plugin    - Build the golangci-lint plugin (Module Plugin System)"
+	@echo "  make vet    		  - Run linter as CLI tool through go vet"
+	@echo "  make vet-fix    	  - Run linter as CLI tool through go vet with fix option"
+	@echo "  make build-plugin    - Build custom golangci-lint binary with embedded logs plugin"
+	@echo "  make lint            - Run linting with the custom binary"
+	@echo "  make lint-fix        - Run linting with the custom binary and apply fixes"
 	@echo "  make test            - Run all tests"
-	@echo "  make clean           - Clean build artifacts"
 	@echo "  make help            - Show this help message"
-	@echo "  make verify-plugin   - Verify the plugin builds correctly"
 
-# Build the CLI tool
 build-cli:
 	@echo "Building CLI tool..."
-	$(GO) build -o logs.exe ./cmd/main.go
+	$(GO) build -o logs ./cmd/main.go
 
-# Build the golangci-lint plugin using Module Plugin System
+vet:
+	@echo "Running go vet..."
+	$(GO) vet -vettool=./logs ./...
+
+vet-fix:
+	@echo "Running go vet with fix option..."
+	$(GO) vet -vettool=./logs -fix ./...
+
 build-plugin:
-	@echo "Building golangci-lint plugin..."
-	mkdir -p bin
-	$(GO) build -buildmode=plugin -o $(PLUGIN_OUT) ./plugin
+	@echo "Building custom golangci-lint binary with logs plugin..."
+	golangci-lint custom
 
-# Run all tests
+lint:
+	@echo "Running linting with custom binary..."
+	./$(CUSTOM_BIN) run -v
+
+lint-fix:
+	@echo "Running linting with custom binary and applying fixes..."
+	./$(CUSTOM_BIN) run -v --fix
+
 test:
 	@echo "Running tests..."
-	$(GO) test -v ./...
-
-# Clean build artifacts
-clean:
-	@echo "Cleaning build artifacts..."
-	rm -rf bin/
-
-# Verify the plugin builds correctly
-verify-plugin: build-plugin
-	@echo "Plugin built successfully: $(PLUGIN_OUT)"
-	@ls -lh $(PLUGIN_OUT)
+	$(GO) test -v -cover ./...
 
 .DEFAULT_GOAL := help
 
