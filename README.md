@@ -212,3 +212,70 @@ log_records_linter/
 ├── go.mod                     # Зависимости
 └── README.md                  # Документация
 ```
+## Примеры использования
+
+### Пример 1: Проверка существующего проекта
+
+```bash
+# Клонируйте или перейдите в директорию проекта
+cd /path/to/your/project
+
+# Соберите кастомный golangci-lint с плагином
+make build-plugin
+
+# Запустите проверку всего проекта
+./custom-gcl run
+```
+
+**Пример вывода:**
+```
+testdata/test_logger.go:12:15: log message should start with lowercase letter (logs)
+        slogger.Info("Invalid message starting with uppercase")
+                     ^
+testdata/test_logger.go:24:15: log message should be in English only (logs)
+        slogger.Info("message with русский text")
+                     ^
+testdata/test_logger.go:36:15: log message should not contain special characters or emoji (logs)
+        slogger.Info("message with exclamation!")
+                     ^
+```
+
+### Пример 2: Автоматическое исправление ошибок
+
+Линтер поддерживает автоматические исправления для некоторых правил:
+
+```bash
+# Запустите с флагом --fix для автоматических исправлений
+./custom-gcl run --fix
+
+# Или через Makefile
+make lint-fix
+```
+
+**До исправления:**
+```go
+package main
+
+import "log/slog"
+
+func main() {
+    logger := slog.Default()
+    logger.Info("Server Started on port 8080")
+    logger.Error("Connection failed!!!")
+    logger.Warn("Ошибка подключения")
+}
+```
+
+**После исправления:**
+```go
+package main
+
+import "log/slog"
+
+func main() {
+    logger := slog.Default()
+    logger.Info("server Started on port 8080")
+    logger.Error("connection failed")
+    logger.Warn("")
+}
+```
