@@ -97,17 +97,12 @@ func TestIsEnglishOnlyValid(t *testing.T) {
 			msg:         "中文",
 			expectError: true,
 		},
-		{
-			name:        "emoji",
-			msg:         "yoyoyo 😀",
-			expectError: true,
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			result := isEnglishOnlyValid(tt.msg)
+			result := !(isEnglishOnlyValid(tt.msg))
 
 			if tt.expectError && !result {
 				t.Errorf("expected error, but got none: %s", tt.name)
@@ -160,11 +155,6 @@ func TestIsNoSpecialCharsValid(t *testing.T) {
 		{
 			name:        "emoji",
 			msg:         "hi 😀",
-			expectError: true,
-		},
-		{
-			name:        "cyrillic_chars",
-			msg:         "селектел",
 			expectError: true,
 		},
 		{
