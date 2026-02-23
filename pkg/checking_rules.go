@@ -48,30 +48,23 @@ func isLowercaseStartValid(msg string) bool {
 // isEnglishOnlyValid checks if the log message contains only English letters, digits, spaces, and allowed punctuation.
 func isEnglishOnlyValid(msg string) bool {
 	for _, r := range msg {
-		if unicode.IsDigit(r) || unicode.IsSpace(r) {
+		if !unicode.IsLetter(r) {
 			continue
 		}
-		if r == '.' || r == ',' || r == ':' || r == ';' || r == '-' || r == '_' || r == '\'' || r == '"' {
-			continue
+		if !((r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z')) {
+			return false
 		}
-		if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') {
-			continue
-		}
-		return true
 	}
-	return false
+	return true
 }
 
 // isNoSpecialCharsValid checks if the log message contains any special characters or emoji that are not allowed.
 func isNoSpecialCharsValid(msg string) bool {
 	for _, r := range msg {
-		if unicode.IsDigit(r) || unicode.IsSpace(r) {
+		if unicode.IsDigit(r) || unicode.IsSpace(r) || unicode.IsLetter(r) {
 			continue
 		}
 		if r == '.' || r == ',' || r == ':' || r == ';' || r == '-' || r == '_' || r == '\'' || r == '"' {
-			continue
-		}
-		if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') {
 			continue
 		}
 		return true
@@ -115,8 +108,8 @@ func checkLowercaseStart(pass *analysis.Pass, pos token.Pos, msg string) {
 // checkEnglishOnly checks if the log message contains only English letters, digits,
 // spaces, and allowed punctuation, and reports an issue if it does not.
 func checkEnglishOnly(pass *analysis.Pass, pos token.Pos, msg string) {
-	if isEnglishOnlyValid(msg) {
-		pass.Reportf(pos, "log message should be in English only (Latin alphabet)")
+	if !isEnglishOnlyValid(msg) {
+		pass.Reportf(pos, "log message should be in English only")
 	}
 }
 
