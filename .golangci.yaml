@@ -4,11 +4,11 @@ version: "0.0.1"
 
 linters:
   enable:
-    - logs-linter
+    - logs
   settings:
     custom:
       logs:
-        path: "bin/logs-linter.so"
+        path: "bin/logs.so"
         description: "Custom linter to check for log records in Go code"
         original-url: github.com/lazarevFedor/log_records_linter
 

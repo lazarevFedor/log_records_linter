@@ -1,6 +1,6 @@
 .PHONY: help build build-plugin test lint clean
 
-PLUGIN_NAME := logs-linter
+PLUGIN_NAME := logs
 PLUGIN_OUT := bin/$(PLUGIN_NAME).so
 GO := go
 
