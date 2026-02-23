@@ -1,0 +1,6 @@
+{
+  "enable_lowercase_start": true,
+  "enable_english_only": true,
+  "enable_no_special_chars": true,
+  "enable_sensitive_patterns": false
+}
