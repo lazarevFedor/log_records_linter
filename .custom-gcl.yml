@@ -1,0 +1,6 @@
+version: v2.10.1
+
+plugins:
+  - module: 'log_records_linter'
+    import: 'log_records_linter/pkg'
+    path: '.'
