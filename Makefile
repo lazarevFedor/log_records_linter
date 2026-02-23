@@ -6,11 +6,17 @@ GO := go
 
 help:
 	@echo "Available targets:"
+	@echo "  make build-cli       - Build the CLI tool"
 	@echo "  make build-plugin    - Build the golangci-lint plugin (Module Plugin System)"
 	@echo "  make test            - Run all tests"
 	@echo "  make clean           - Clean build artifacts"
 	@echo "  make help            - Show this help message"
 	@echo "  make verify-plugin   - Verify the plugin builds correctly"
+
+# Build the CLI tool
+build-cli:
+	@echo "Building CLI tool..."
+	$(GO) build -o logs.exe ./cmd/main.go
 
 # Build the golangci-lint plugin using Module Plugin System
 build-plugin:
