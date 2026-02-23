@@ -35,9 +35,9 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		}
 
 		checkLowercaseStart(pass, msgPos, msg)
-		checkEnglishOnly(pass, msgPos, msg)
 		checkNoSpecialChars(pass, msgPos, msg)
 		checkNoSensitiveData(pass, msgPos, msg)
+		checkEnglishOnly(pass, msgPos, msg)
 	})
 
 	return nil, nil
