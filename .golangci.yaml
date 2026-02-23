@@ -1,16 +1,15 @@
-# Configuration for golangci-lint with the log_records_linter plugin
-version: "0.0.1"
-
+version: "2"
 
 linters:
+  default: none
   enable:
     - logs
+
   settings:
     custom:
       logs:
-        path: "bin/logs.so"
-        description: "Custom linter to check for log records in Go code"
+        type: module
+        description: "Custom linter for validating log records structure and format"
         original-url: github.com/lazarevFedor/log_records_linter
-
-run:
-  timeout: 5m
+        settings:
+          config: configs/config_rules.json
