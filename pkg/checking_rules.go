@@ -101,7 +101,23 @@ func isNoSensitiveDataValid(msg string) bool {
 // and reports an issue if it does not.
 func checkLowercaseStart(pass *analysis.Pass, pos token.Pos, msg string) {
 	if isLowercaseStartValid(msg) {
-		pass.Reportf(pos, "log message should start with lowercase letter")
+		correctedMsg := strings.ToLower(string(msg[0])) + msg[1:]
+		pass.Report(analysis.Diagnostic{
+			Pos:     pos,
+			Message: "log message should start with lowercase letter",
+			SuggestedFixes: []analysis.SuggestedFix{
+				{
+					Message: "Change first letter to lowercase",
+					TextEdits: []analysis.TextEdit{
+						{
+							Pos:     pos,
+							End:     pos + token.Pos(len(msg)+2),
+							NewText: []byte("\"" + correctedMsg + "\""),
+						},
+					},
+				},
+			},
+		})
 	}
 }
 
@@ -109,7 +125,23 @@ func checkLowercaseStart(pass *analysis.Pass, pos token.Pos, msg string) {
 // spaces, and allowed punctuation, and reports an issue if it does not.
 func checkEnglishOnly(pass *analysis.Pass, pos token.Pos, msg string) {
 	if !isEnglishOnlyValid(msg) {
-		pass.Reportf(pos, "log message should be in English only")
+		correctedMsg := removeNonEnglishChars(msg)
+		pass.Report(analysis.Diagnostic{
+			Pos:     pos,
+			Message: "log message should be in English only",
+			SuggestedFixes: []analysis.SuggestedFix{
+				{
+					Message: "Remove non-English characters from log message",
+					TextEdits: []analysis.TextEdit{
+						{
+							Pos:     pos,
+							End:     pos + token.Pos(len(msg)+2),
+							NewText: []byte("\"" + correctedMsg + "\""),
+						},
+					},
+				},
+			},
+		})
 	}
 }
 
@@ -117,7 +149,23 @@ func checkEnglishOnly(pass *analysis.Pass, pos token.Pos, msg string) {
 // or emoji that are not allowed, and reports an issue if it does.
 func checkNoSpecialChars(pass *analysis.Pass, pos token.Pos, msg string) {
 	if isNoSpecialCharsValid(msg) {
-		pass.Reportf(pos, "log message should not contain special characters or emoji")
+		correctedMsg := removeSpecialChars(msg)
+		pass.Report(analysis.Diagnostic{
+			Pos:     pos,
+			Message: "log message should not contain special characters or emoji",
+			SuggestedFixes: []analysis.SuggestedFix{
+				{
+					Message: "Remove special characters and emoji from log message",
+					TextEdits: []analysis.TextEdit{
+						{
+							Pos:     pos,
+							End:     pos + token.Pos(len(msg)+2),
+							NewText: []byte("\"" + correctedMsg + "\""),
+						},
+					},
+				},
+			},
+		})
 	}
 }
 
@@ -127,4 +175,32 @@ func checkNoSensitiveData(pass *analysis.Pass, pos token.Pos, msg string) {
 	if isNoSensitiveDataValid(msg) {
 		pass.Reportf(pos, "log message should not contain sensitive data")
 	}
+}
+
+func removeSpecialChars(s string) string {
+	var builder strings.Builder
+	for _, r := range s {
+		if unicode.IsDigit(r) || unicode.IsSpace(r) || unicode.IsLetter(r) {
+			builder.WriteRune(r)
+		} else if r == '.' || r == ',' || r == ':' || r == ';' || r == '-' || r == '_' || r == '\'' || r == '"' || r == '/' {
+			builder.WriteRune(r)
+		}
+	}
+	return builder.String()
+}
+
+func removeNonEnglishChars(s string) string {
+	var builder strings.Builder
+	for _, r := range s {
+		if unicode.IsLetter(r) {
+			if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') {
+				builder.WriteRune(r)
+			}
+		} else {
+			builder.WriteRune(r)
+		}
+	}
+	result := builder.String()
+	result = strings.Join(strings.Fields(result), " ")
+	return result
 }
